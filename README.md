@@ -30,9 +30,6 @@ CSS3 – Styling, Glassmorphism, Dark/Light themes
 JavaScript (ES6) – Logic, DOM manipulation, Notifications API
 Browser APIs – Notifications & localStorage
 
-📂 Project Structure
-📁 Advanced-ToDo-App
- ├── index.html
 
 🎯 Learning Outcomes
 Improved understanding of JavaScript event handling
