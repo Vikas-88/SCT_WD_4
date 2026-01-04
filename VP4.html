@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Advanced To-Do App</title>
+
+<style>
+:root {
+  --bg: linear-gradient(135deg, #dbeafe, #f0f9ff);
+  --glass: rgba(255,255,255,0.35);
+  --border: rgba(255,255,255,0.4);
+  --text: #111;
+}
+
+body.dark {
+  --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  --glass: rgba(30,30,30,0.45);
+  --border: rgba(255,255,255,0.15);
+  --text: #f5f5f5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: Arial, sans-serif;
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.8s, color 0.5s;
+}
+
+.app {
+  width: 390px;
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  border-radius: 18px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+
+h2 {
+  text-align: center;
+}
+
+.controls, .filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+input, select, button {
+  padding: 8px;
+  border-radius: 10px;
+  border: none;
+  width: 100%;
+}
+
+button {
+  cursor: pointer;
+  background: var(--glass);
+  color: var(--text);
+  transition: transform 0.2s;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: var(--glass);
+  padding: 10px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.task-top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.priority {
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.high { background: rgba(255,0,0,0.3); }
+.medium { background: rgba(255,165,0,0.3); }
+.low { background: rgba(0,128,0,0.3); }
+
+small {
+  font-size: 12px;
+  opacity: 0.8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <h2>📝 To-Do App</h2>
+
+  <div class="controls">
+    <input id="taskText" placeholder="Task name">
+    <input type="datetime-local" id="taskTime">
+  </div>
+
+  <div class="controls">
+    <select id="taskPriority">
+      <option value="low">Low Priority</option>
+      <option value="medium">Medium Priority</option>
+      <option value="high">High Priority</option>
+    </select>
+    <button onclick="addTask()">Add</button>
+    <button onclick="toggleTheme()">🌙</button>
+  </div>
+
+  <div class="filters">
+    <button onclick="setFilter('all')">All</button>
+    <button onclick="setFilter('today')">Today</button>
+    <button onclick="setFilter('upcoming')">Upcoming</button>
+  </div>
+
+  <ul id="taskList"></ul>
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let filter = "all";
+
+if ("Notification" in window) {
+  Notification.requestPermission();
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+}
+
+function addTask() {
+  const text = taskText.value.trim();
+  const time = taskTime.value;
+  const priority = taskPriority.value;
+
+  if (!text) return alert("Enter a task");
+
+  tasks.push({
+    id: Date.now(),
+    text,
+    time,
+    priority,
+    completed: false,
+    notified: false
+  });
+
+  save();
+  taskText.value = "";
+  taskTime.value = "";
+}
+
+function toggleTask(id) {
+  tasks = tasks.map(t =>
+    t.id === id ? { ...t, completed: !t.completed } : t
+  );
+  save();
+}
+
+function editTask(id) {
+  const newText = prompt("Edit task");
+  if (!newText) return;
+
+  tasks = tasks.map(t =>
+    t.id === id ? { ...t, text: newText } : t
+  );
+  save();
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  save();
+}
+
+function setFilter(f) {
+  filter = f;
+  render();
+}
+
+function save() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  render();
+}
+
+function render() {
+  taskList.innerHTML = "";
+  const today = new Date().toISOString().slice(0,10);
+
+  tasks.filter(t => {
+    if (filter === "today") return t.time?.startsWith(today);
+    if (filter === "upcoming") return t.time && t.time.slice(0,10) > today;
+    return true;
+  }).forEach(t => {
+    const li = document.createElement("li");
+    li.className = t.completed ? "completed" : "";
+    li.innerHTML = `
+      <div class="task-top">
+        <span onclick="toggleTask(${t.id})">${t.text}</span>
+        <span class="priority ${t.priority}">
+          ${t.priority.toUpperCase()}
+        </span>
+      </div>
+      <small>
+        ${t.time ? "⏰ " + t.time.replace("T"," ") : ""}
+        <br>
+        <button onclick="editTask(${t.id})">✏️</button>
+        <button onclick="deleteTask(${t.id})">❌</button>
+      </small>
+    `;
+    taskList.appendChild(li);
+  });
+}
+
+/* Notifications */
+setInterval(() => {
+  const now = new Date();
+  tasks.forEach(t => {
+    if (!t.completed && t.time && !t.notified) {
+      if (now >= new Date(t.time)) {
+        new Notification("Task Reminder", {
+          body: `${t.text} (${t.priority.toUpperCase()})`
+        });
+        t.notified = true;
+        save();
+      }
+    }
+  });
+}, 30000);
+
+render();
+</script>
+
+</body>
+</html>
