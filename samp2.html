@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Glass Navigation System</title>
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <style>
+    /* ========= RESET ========= */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    /* ========= THEME VARIABLES ========= */
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.18);
+      --glass-border: rgba(255, 255, 255, 0.35);
+      --text: #ffffff;
+      --glow: linear-gradient(135deg, #00feba, #5b86e5);
+    }
+
+    body.light {
+      --glass-bg: rgba(255, 255, 255, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.45);
+      --text: #0f172a;
+      --glow: linear-gradient(135deg, #ff8c00, #ff0080);
+    }
+
+    body {
+      background: linear-gradient(135deg, #020617, #020617);
+      color: var(--text);
+      scroll-behavior: smooth;
+    }
+
+    .cnt {
+        font-size: larger;
+    }
+
+    
+
+    /* ========= NAVBAR ========= */
+    #navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--glass-bg);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--glass-border);
+      z-index: 1000;
+      transition: all 0.35s ease;
+    }
+
+    #navbar.scrolled {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .logo span {
+      color: #3b82f6;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 28px;
+    }
+
+    .nav-links a {
+      position: relative;
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      z-index: 1;
+    }
+
+    .nav-links a::before {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      background: var(--glow);
+      border-radius: 12px;
+      opacity: 0;
+      filter: blur(12px);
+      z-index: -1;
+      transition: opacity 0.3s ease;
+    }
+
+    .nav-links a:hover::before {
+      opacity: 1;
+    }
+
+    .nav-links a:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    #themeToggle {
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    /* ========= SECTIONS ========= */
+    section {
+      padding: 120px 40px;
+      min-height: 100vh;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    h1, h2 {
+      margin-bottom: 1rem;
+    }
+
+    p {
+      max-width: 900px;
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+
+    /* ========= HERO ========= */
+    .hero {
+      display: flex;
+      align-items: center;
+      gap: 3rem;
+    }
+
+    .hero img {
+      max-width: 420px;
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    }
+
+    /* ========= CARD GRID ========= */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      padding: 1.6rem;
+      border-radius: 18px;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+    }
+
+    .card i {
+      font-size: 1.8rem;
+      margin-bottom: 0.8rem;
+      color: #3b82f6;
+    }
+
+    .card img {
+      width: 100%;
+      border-radius: 14px;
+      margin-bottom: 1rem;
+    }
+
+    /* ========= CONTACT ========= */
+    #contactForm {
+      max-width: 420px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      padding: 2rem;
+      border-radius: 18px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.35);
+    }
+
+    #contactForm input,
+    #contactForm textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.15);
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+
+    #contactForm button {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+      background: var(--glow);
+    }
+
+    #formStatus {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    body.light {
+      background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <div class="logo">SHARK-<span>-X</span></div>
+
+  <ul class="nav-links">
+    <li><a href="#home">Home</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+
+  <button id="themeToggle">🌙</button>
+</nav>
+
+<!-- HOME -->
+<section id="home" class="hero">
+  <div>
+    <h1>Interactive Glass Navigation System</h1>
+    <p>
+      This project showcases a modern navigation experience built with
+      glassmorphism, smooth interactions, and responsive behavior. It focuses
+      on usability, performance, and professional UI design standards.
+    </p>
+  </div>
+  <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085" alt="Web Development">
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <h2>Core Features</h2>
+  <div class="grid">
+    <div class="card">
+      <i class="fa-solid fa-layer-group"></i>
+      <h3>Glassmorphism UI</h3>
+      <p>Modern frosted-glass design using backdrop filters and transparency.</p>
+    </div>
+    <div class="card">
+      <i class="fa-solid fa-moon"></i>
+      <h3>Dark / Light Mode</h3>
+      <p>Theme toggle with persistent user preference using localStorage.</p>
+    </div>
+    <div class="card">
+      <i class="fa-solid fa-wand-magic-sparkles"></i>
+      <h3>Gradient Hover Glow</h3>
+      <p>Subtle animated glow effects that enhance interaction feedback.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <h2>Highlighted Projects</h2>
+  <div class="grid">
+    <div class="card">
+      <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d" alt="">
+      <h3>Advanced Navigation Menu</h3>
+      <p>Scroll-aware fixed navigation with smooth transitions and UX focus.</p>
+    </div>
+    <div class="card">
+      <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c" alt="">
+      <h3>UI Interaction Design</h3>
+      <p>Micro-interactions, hover effects, and animated feedback systems.</p>
+    </div>
+    <div class="card">
+      <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97" alt="">
+      <h3>Frontend Practice</h3>
+      <p>Hands-on experimentation with DOM, events, and responsive layouts.</p>
+    </div>
+    </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <h2>About This Project</h2><div class="cnt">
+  <p>
+    This project was built to demonstrate real-world frontend engineering
+    practices using vanilla HTML, CSS, and JavaScript. The focus is on clean
+    architecture, accessibility, and scalable UI components.
+
+    <P> This project highlights the practical implementation of a modern, interactive navigation system using core front-end technologies.
+        It demonstrates glassmorphism design principles combined with gradient hover effects, scroll-aware styling, and a persistent dark/light mode toggle to enhance user experience.
+        The navigation bar remains fixed and responsive across all pages, ensuring seamless accessibility.
+        Interactive cards, smooth transitions, and visual feedback mechanisms improve usability without sacrificing performance.
+        The integrated contact form enables real-world communication through client-side email handling.
+        Overall, the project reflects industry-relevant UI/UX practices, clean code structuring, and a strong focus on scalability, accessibility, and professional web design standards.
+    </P></div>
+  </p>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <h2>Contact</h2>
+  <p>Have a question or collaboration idea? Send your message below.</p>
+
+  <form id="contactForm">
+    <input type="text" name="name" placeholder="Your Name" required />
+    <input type="email" name="email" placeholder="Your Email" required />
+    <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+    <button type="submit">Send Message</button>
+    <p id="formStatus"></p>
+  </form>
+</section>
+
+<script>
+  /* EMAILJS INIT */
+  (function(){
+    emailjs.init("YOUR_PUBLIC_KEY");
+  })();
+
+  /* SCROLL EFFECT */
+  const navbar = document.getElementById("navbar");
+  window.addEventListener("scroll", () => {
+    navbar.classList.toggle("scrolled", window.scrollY > 50);
+  });
+
+  /* THEME TOGGLE */
+  const toggleBtn = document.getElementById("themeToggle");
+  if(localStorage.theme === "light"){
+    document.body.classList.add("light");
+    toggleBtn.textContent = "☀️";
+  }
+
+  toggleBtn.onclick = () => {
+    document.body.classList.toggle("light");
+    const isLight = document.body.classList.contains("light");
+    toggleBtn.textContent = isLight ? "☀️" : "🌙";
+    localStorage.theme = isLight ? "light" : "dark";
+  };
+
+  /* CONTACT FORM */
+  const form = document.getElementById("contactForm");
+  const statusText = document.getElementById("formStatus");
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    statusText.textContent = "Sending...";
+
+    emailjs.sendForm(
+      "YOUR_SERVICE_ID",
+      "YOUR_TEMPLATE_ID",
+      this
+    ).then(() => {
+      statusText.textContent = "Message sent successfully!";
+      form.reset();
+    }, () => {
+      statusText.textContent = "Failed to send message. Try again.";
+    });
+  });
+</script>
+
+</body>
+</html>
